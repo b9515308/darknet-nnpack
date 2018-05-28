@@ -1,7 +1,7 @@
 # Darknet with NNPACK
 This repo is developed based on the work of  https://github.com/thomaspark-pkj/NNPACK-darknet.git.
 please refer the link for the detail, if needed.
-I fork the repo to migrate accelrated darknet to ZCU102 platform and to see the performance.
+I fork the repo to migrate accelerated darknet to ZCU102 platform and to see the performance.
 
 ## Build from ZCU102
 Log in to ZCU102 using SSH.<br/>
