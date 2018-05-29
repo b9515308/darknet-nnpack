@@ -1,12 +1,14 @@
 # Darknet with NNPACK
-NNPACK was used to optimize [Darknet](https://github.com/pjreddie/darknet) without using a GPU. It is useful for embedded devices using ARM CPUs.
+This repo is developed based on the work of  https://github.com/thomaspark-pkj/NNPACK-darknet.git.
+please refer the link for the detail, if needed.
+I fork the repo to migrate accelerated darknet to ZCU102 platform and to see the performance.
 
-## Build from Raspberry Pi 3
-Log in to Raspberry Pi using SSH.<br/>
+## Build from ZCU102
+Log in to ZCU102 using SSH.<br/>
 Install [PeachPy](https://github.com/Maratyszcza/PeachPy) and [confu](https://github.com/Maratyszcza/confu)
 ```
 sudo pip install --upgrade git+https://github.com/Maratyszcza/PeachPy
-sudo pip install --upgrade git+https://github.com/Maratyszcza/confu
+sudo pip install --upgrade git+https://github.com/b9515308/confu.git
 ```
 Install [Ninja](https://ninja-build.org/)
 ```
@@ -20,20 +22,18 @@ Install clang
 ```
 sudo apt-get install clang
 ```
-Install [NNPACK-darknet](https://github.com/thomaspark-pkj/NNPACK-darknet.git)
+Install [NNPACK-darknet](https://github.com/b9515308/NNPACK-darknet.git)
 ```
-git clone https://github.com/thomaspark-pkj/NNPACK-darknet.git
+git clone https://github.com/b9515308/NNPACK-darknet.git
 cd NNPACK-darknet
 confu setup
-python ./configure.py --backend auto
+python ./configure.py --backend arm
 $NINJA_PATH/ninja
-sudo cp -a lib/* /usr/lib/
-sudo cp include/nnpack.h /usr/include/
-sudo cp deps/pthreadpool/include/pthreadpool.h /usr/include/
+
 ```
 Build darknet-nnpack
 ```
-git clone https://github.com/thomaspark-pkj/darknet-nnpack.git
+git clone https://github.com/b9515308/darknet-nnpack.git
 cd darknet-nnpack
 make
 ```
@@ -46,10 +46,10 @@ YOLOv2
 Tiny-YOLO
 ./darknet detector test cfg/voc.data cfg/tiny-yolo-voc.cfg tiny-yolo-voc.weights data/person.jpg
 ```
-## Result
+## Result 
 Model | Build Options | Prediction Time (seconds)
 :-:|:-:|:-:
-YOLOv2 | NNPACK=1,ARM_NEON=1 | 8.2
-YOLOv2 | NNPACK=0,ARM_NEON=0 | 156
-Tiny-YOLO | NNPACK=1,ARM_NEON=1 | 1.3
-Tiny-YOLO | NNPACK=0,ARM_NEON=0 | 38
+YOLOv2 | NNPACK=1,ARM_NEON=1 |?
+YOLOv2 | NNPACK=0,ARM_NEON=0 | ?
+Tiny-YOLO | NNPACK=1,ARM_NEON=1 | ?
+Tiny-YOLO | NNPACK=0,ARM_NEON=0 |?
