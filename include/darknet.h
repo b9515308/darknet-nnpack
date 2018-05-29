@@ -11,6 +11,15 @@
 #define SECRET_NUM -1234
 extern int gpu_index;
 
+#define DEBUG_PRINT (0)
+#define HEADER "[OBJ_DECTOR]: "
+
+#if (DEBUG_PRINT)
+#define dector_printf(X...) printf(HEADER X)
+#else
+#define dector_printf(X...)
+#endif
+
 #ifdef GPU
     #define BLOCK 512
 
@@ -496,11 +505,18 @@ typedef struct {
     float aspect;
 } augment_args;
 
+typedef enum {
+    PLANAR,
+    INTERLEAVED
+}channel_type;
+
 typedef struct {
     int w;
     int h;
     int c;
     float *data;
+    char name[256];
+    channel_type c_type;
 } image;
 
 typedef struct{
@@ -565,6 +581,33 @@ typedef struct{
     float left, right, top, bottom;
 } box_label;
 
+#ifdef __cplusplus
+#include <opencv2/opencv.hpp>
+extern "C" {
+#endif
+
+network *load_network(char *cfg, char *weights, int clear);
+void set_batch_network(network *net, int b); 
+image **load_alphabet();
+image load_image_color(char *filename, int w, int h); 
+image resize_image(image im, int w, int h); 
+float *network_predict(network *net, float *input);
+float sec(clock_t clocks);
+void get_detection_boxes(layer l, int w, int h, float thresh, float **probs, box *boxes, int only_objectness);
+void do_nms_sort(box *boxes, float **probs, int total, int classes, float thresh);
+void draw_detections(image im, int num, float thresh, box *boxes, float **probs, float **masks, char **names, image **alphabet, int classes);
+void save_image(image p, const char *name);
+void free_image(image m); 
+void show_image(image p, const char *name);
+#ifdef OPENCV
+image ipl_to_image(IplImage* src);
+#endif
+void draw_label_inter(image a, int r, int c, image label, const float *rgb);
+void draw_box_inter(image a, int x1, int y1, int x2, int y2, float r, float g, float b); 
+
+#ifdef __cplusplus
+}
+#endif
 
 network *load_network(char *cfg, char *weights, int clear);
 load_args get_base_args(network *net);

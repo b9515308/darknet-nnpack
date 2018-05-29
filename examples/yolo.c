@@ -288,6 +288,10 @@ void test_yolo(char *cfgfile, char *weightfile, char *filename, float thresh)
             if(!input) return;
             strtok(input, "\n");
         }
+		#ifdef PROFILING
+		clock_t overall;
+		overall = clock();
+		#endif
         image im = load_image_color(input,0,0);
         image sized = resize_image(im, net->w, net->h);
         float *X = sized.data;
@@ -297,6 +301,9 @@ void test_yolo(char *cfgfile, char *weightfile, char *filename, float thresh)
         get_detection_boxes(l, 1, 1, thresh, probs, boxes, 0);
         if (nms) do_nms_sort(boxes, probs, l.side*l.side*l.n, l.classes, nms);
         draw_detections(im, l.side*l.side*l.n, thresh, boxes, probs, 0, voc_names, alphabet, 20);
+		#ifdef PROFILING
+		printf("overall time in %f seconds.\n", sec(clock()-overall));
+		#endif
         save_image(im, "predictions");
         show_image(im, "predictions");
 
