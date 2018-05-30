@@ -605,6 +605,13 @@ image ipl_to_image(IplImage* src);
 void draw_label_inter(image a, int r, int c, image label, const float *rgb);
 void draw_box_inter(image a, int x1, int y1, int x2, int y2, float r, float g, float b); 
 
+#ifdef NNPACK
+image letterbox_image_thread(image im, int w, int h, pthreadpool_t threadpool);
+#endif
+#ifdef NNPACK
+image load_image_thread(char *filename, int w, int h, int c, pthreadpool_t threadpool);
+#endif
+
 #ifdef __cplusplus
 }
 #endif
@@ -710,16 +717,10 @@ void free_network(network *net);
 void set_batch_network(network *net, int b);
 void set_temp_network(network *net, float t);
 image load_image(char *filename, int w, int h, int c);
-#ifdef NNPACK
-image load_image_thread(char *filename, int w, int h, int c, pthreadpool_t threadpool);
-#endif
 image load_image_color(char *filename, int w, int h);
 image make_image(int w, int h, int c);
 image resize_image(image im, int w, int h);
 image letterbox_image(image im, int w, int h);
-#ifdef NNPACK
-image letterbox_image_thread(image im, int w, int h, pthreadpool_t threadpool);
-#endif
 image crop_image(image im, int dx, int dy, int w, int h);
 image resize_min(image im, int min);
 image resize_max(image im, int max);

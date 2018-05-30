@@ -5,6 +5,7 @@
 #include <vector>
 #include <opencv2/opencv.hpp>
 #include <yolo_lib.h>
+#include <sys/time.h>
 
 using namespace cv;
 
@@ -19,9 +20,11 @@ static network *net;
 void setup_yolo_env(char *cfgfile, char *weightfile)
 {
 	dector_printf("setup yolo_env\n");
+
 	net = load_network(cfgfile, weightfile, 0);
     set_batch_network(net, 1);
 	alphabet = load_alphabet();
+
 }
 #if 0
 void set_cur_img_by_name(char *filename)
@@ -132,8 +135,18 @@ void validate_zcu102(int argc, char **argv)
 
     setup_yolo_env(argv[4], argv[5]);
 
+#ifdef NNPACK
+    nnp_initialize();
+	net->threadpool = pthreadpool_create(2);
+#endif
+
 	framebuffer = malloc(f_size);
     yolo_inference_with_ptr(yuv422_data, width, height, 2, 0.2, framebuffer);
+#ifdef NNPACK
+	pthreadpool_destroy(net->threadpool);
+    nnp_deinitialize();
+#endif
+
 }
 
 
@@ -159,7 +172,9 @@ int yolo_inference_with_ptr(void *ptr, int w, int h, int c, float thresh, void *
     void *resiz_data;
 	clock_t time;
 	clock_t overall;
+	struct timeval start, stop;
 
+	gettimeofday(&start, 0);
 	overall = clock();
 
 	layer l = net->layers[net->n-1];
@@ -174,15 +189,14 @@ int yolo_inference_with_ptr(void *ptr, int w, int h, int c, float thresh, void *
 	Mat YUV422_Mat(h, w, CV_8UC2, yuv422_data);
 
 	rgb24_data = malloc(h*w*3);
-	printf("init to RGB in %f seconds.\n", sec(clock()-overall));
 	Mat RGB24_Mat(h ,w ,CV_8UC3,rgb24_data);
 	cvtColor(YUV422_Mat, RGB24_Mat, COLOR_YUV2RGB_YUYV);
-	printf("to RGB in %f seconds.\n", sec(clock()-overall));
+	dector_printf("RGB conversion point %fs.\n", sec(clock()-overall));
 
 	resiz_data = malloc(net->h*net->w*net->c);
 	Mat Resize_Mat(net->h, net->w,CV_8UC3, resiz_data);
 	resize(RGB24_Mat, Resize_Mat, Size(net->h, net->w));
-	printf("resize in %f seconds.\n", sec(clock()-overall));
+	dector_printf("resize point %fs.\n", sec(clock()-overall));
 
 #ifdef DEBUG
 	write_raw_image(yuv422_data,"yuv422_640480_car_conv.raw",w*h*2 );
@@ -206,7 +220,7 @@ int yolo_inference_with_ptr(void *ptr, int w, int h, int c, float thresh, void *
 	*/
 	IplImage *img = new IplImage(Resize_Mat);
 	image resized = ipl_to_image(img);
-	printf("planarlized in %f seconds.\n", sec(clock()-overall));
+	dector_printf("planarlized point %fs.\n", sec(clock()-overall));
 	/*original_image keeps to interleaved, since it is used to draw the box directly*/
 	image original_image;
 	original_image.w = w ; 
@@ -214,26 +228,28 @@ int yolo_inference_with_ptr(void *ptr, int w, int h, int c, float thresh, void *
 	original_image.c = 3 ;
 	original_image.data = image_normalization(RGB24_Mat.ptr(), original_image.w, original_image.h, original_image.c);
 	original_image.c_type = INTERLEAVED;
-	printf("pre-processing in %f seconds.\n", sec(clock()-overall));
+	dector_printf("pre-processing takes %f seconds.\n", sec(clock()-overall));
 
 	time=clock();
 	network_predict(net, resized.data);
-	printf("Predicted in %f seconds.\n", sec(clock()-time));
+	dector_printf("Predicted in %f seconds.\n", sec(clock()-time));
 
 	get_detection_boxes(l, 1, 1, thresh, probs, boxes, 0); 
 
-	printf("detection time in %f seconds.\n", sec(clock()-overall));
+	dector_printf("get box point %fs.\n", sec(clock()-overall));
 	if (nms) do_nms_sort(boxes, probs, l.side*l.side*l.n, l.classes, nms); /*eliminate the similar box and only left 1 box*/
-	printf("exclude darwing  time in %f seconds.\n", sec(clock()-overall));
+	dector_printf("nms point %fs.\n", sec(clock()-overall));
 	
 	draw_detections(original_image, l.side*l.side*l.n, thresh, boxes, probs, 0, voc_names, alphabet, 20);
 
-	printf("exclude darwing fb time in %f seconds.\n", sec(clock()-overall));
+	dector_printf("draw box point %fs.\n", sec(clock()-overall));
 
 	image_denormalize(&original_image);
 	rgb2yuv422(&original_image, fb);
 
 	printf("overall time in %f seconds.\n", sec(clock()-overall));
+	gettimeofday(&stop, 0);
+	printf("Predicted in %ld ms.\n", (stop.tv_sec * 1000 + stop.tv_usec / 1000) - (start.tv_sec * 1000 + start.tv_usec / 1000));
 #if defined(__ARM_ARCH)
 	write_raw_image(fb,"/media/card/fb_yuyv422_640480_car.raw",w*h*2 );
 #else

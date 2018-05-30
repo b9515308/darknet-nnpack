@@ -263,6 +263,7 @@ void validate_yolo_recall(char *cfg, char *weights)
     }
 }
 
+
 void test_yolo(char *cfgfile, char *weightfile, char *filename, float thresh)
 {
     image **alphabet = load_alphabet();
@@ -275,6 +276,14 @@ void test_yolo(char *cfgfile, char *weightfile, char *filename, float thresh)
     char *input = buff;
     int j;
     float nms=.4;
+
+
+#ifdef NNPACK
+    nnp_initialize();
+//  net->threadpool = pthreadpool_create(4);
+#endif
+
+
     box *boxes = calloc(l.side*l.side*l.n, sizeof(box));
     float **probs = calloc(l.side*l.side*l.n, sizeof(float *));
     for(j = 0; j < l.side*l.side*l.n; ++j) probs[j] = calloc(l.classes, sizeof(float *));
@@ -292,8 +301,20 @@ void test_yolo(char *cfgfile, char *weightfile, char *filename, float thresh)
 		clock_t overall;
 		overall = clock();
 		#endif
+
+#ifdef NNPACK
+        image im = load_image_thread(input, 0, 0, net->c, net->threadpool);
+        image sized = letterbox_image_thread(im, net->w, net->h, net->threadpool);
+#else
+
         image im = load_image_color(input,0,0);
-        image sized = resize_image(im, net->w, net->h);
+        image sized = letterbox_image(im, net->w, net->h);
+        //image sized = resize_image(im, net->w, net->h);
+        //image sized2 = resize_max(im, net->w);
+        //image sized = crop_image(sized2, -((net->w - sized2.w)/2), -((net->h - sized2.h)/2), net->w, net->h);
+        //resize_network(net, sized.w, sized.h);
+#endif
+
         float *X = sized.data;
         time=clock();
         network_predict(net, X);
@@ -315,6 +336,12 @@ void test_yolo(char *cfgfile, char *weightfile, char *filename, float thresh)
 #endif
         if (filename) break;
     }
+
+#ifdef NNPACK
+//    pthreadpool_destroy(net->threadpool);
+    nnp_deinitialize();
+#endif
+
 }
 
 void run_yolo(int argc, char **argv)
@@ -327,6 +354,7 @@ void run_yolo(int argc, char **argv)
         fprintf(stderr, "usage: %s %s [train/test/valid] [cfg] [weights (optional)]\n", argv[0], argv[1]);
         return;
     }
+	printf("thresh %f\n", thresh);
 
     int avg = find_int_arg(argc, argv, "-avg", 1);
     char *cfg = argv[3];

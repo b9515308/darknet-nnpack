@@ -5,7 +5,7 @@ NNPACK=1
 ARM_NEON=0
 OPENMP=0
 DEBUG=0
-PROF=1
+PROF=0
 ARCH_X86=1
 ARCH_ARM=0
 
@@ -71,8 +71,11 @@ endif
 
 ifeq ($(ARCH_ARM),1)
 LDFLAGS += -lopencv_core -lopencv_imgcodecs -lopencv_highgui -lopencv_videoio -lopencv_imgproc
-LDFLAGS += -Wl,-rpath-link='/home/lucas/Project/Software/SDSoc_2017-4/SDK/2017.4/data/embeddedsw/ThirdParty/opencv/aarch64/lib'
-LDFLAGS += -Wl,-rpath='/usr/lib'
+#LDFLAGS += -Wl,-rpath-link='/home/lucas/Project/Software/SDSoc_2017-4/SDK/2017.4/data/embeddedsw/ThirdParty/opencv/aarch64/lib'
+#LDFLAGS += -Wl,-rpath='/usr/lib'
+#LBFLAGS = -Wl,-rpath-link='/home/lucas/Project/Software/SDSoc_2017-4/SDK/2017.4/data/embeddedsw/ThirdParty/opencv/aarch64/lib'
+#LBFALGS +=-Wl,-rpath='/usr/lib'
+
 endif
 endif
 
@@ -106,7 +109,8 @@ endif
 
 ifeq ($(ARM_NEON), 1)
 COMMON+= -DARM_NEON
-CFLAGS+= -DARM_NEON  -funsafe-math-optimizations -ftree-vectorize
+#CFLAGS+= -DARM_NEON  -funsafe-math-optimizations -ftree-vectorize
+CFLAGS+= -DARM_NEON
 endif
 
 OBJ= gemm.o utils.o cuda.o deconvolutional_layer.o convolutional_layer.o list.o image.o activations.o im2col.o col2im.o blas.o crop_layer.o dropout_layer.o maxpool_layer.o softmax_layer.o data.o matrix.o network.o connected_layer.o cost_layer.o parser.o option_list.o detection_layer.o route_layer.o box.o normalization_layer.o avgpool_layer.o layer.o local_layer.o shortcut_layer.o activation_layer.o rnn_layer.o gru_layer.o crnn_layer.o demo.o batchnorm_layer.o region_layer.o reorg_layer.o tree.o  lstm_layer.o
@@ -137,7 +141,8 @@ $(ALIB): $(OBJS)
 	$(AR) $(ARFLAGS) $@ $^
 
 $(SLIB): $(OBJS)
-	$(CC) $(CFLAGS) -shared $^ -o $@
+#	$(CC) $(CFLAGS)  -shared $^ -o $@  $(LDFLAGS)
+	$(CC) $(CFLAGS)  -shared $^ -o $@
 
 $(OBJDIR)%.o: %.c $(DEPS)
 	$(CC) $(COMMON) $(CFLAGS) -c $< -o $@
