@@ -183,7 +183,9 @@ void demo(char *cfgfile, char *weightfile, float thresh, int cam_index, const ch
     }
 
     demo_time = what_time_is_it_now();
-
+#ifdef NNPACK
+    nnp_initialize();
+#endif	
     while(!demo_done){
         buff_index = (buff_index + 1) %3;
         if(pthread_create(&fetch_thread, 0, fetch_in_thread, 0)) error("Thread creation failed");
@@ -201,6 +203,9 @@ void demo(char *cfgfile, char *weightfile, float thresh, int cam_index, const ch
         pthread_join(detect_thread, 0);
         ++count;
     }
+#ifdef NNPACK
+    nnp_deinitialize();
+#endif
 }
 
 void demo_compare(char *cfg1, char *weight1, char *cfg2, char *weight2, float thresh, int cam_index, const char *filename, char **names, int classes, int delay, char *prefix, int avg_frames, float hier, int w, int h, int frames, int fullscreen)

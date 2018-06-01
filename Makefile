@@ -2,12 +2,12 @@ GPU=0
 CUDNN=0
 OPENCV=1
 NNPACK=1
-ARM_NEON=0
+ARM_NEON=1
 OPENMP=0
 DEBUG=0
 PROF=0
-ARCH_X86=1
-ARCH_ARM=0
+ARCH_X86=0
+ARCH_ARM=1
 
 
 ARCH= -gencode arch=compute_30,code=sm_30 \
@@ -109,7 +109,7 @@ endif
 
 ifeq ($(ARM_NEON), 1)
 COMMON+= -DARM_NEON
-#CFLAGS+= -DARM_NEON  -funsafe-math-optimizations -ftree-vectorize
+CFLAGS+= -DARM_NEON  -funsafe-math-optimizations -ftree-vectorize
 CFLAGS+= -DARM_NEON
 endif
 
@@ -141,8 +141,8 @@ $(ALIB): $(OBJS)
 	$(AR) $(ARFLAGS) $@ $^
 
 $(SLIB): $(OBJS)
-#	$(CC) $(CFLAGS)  -shared $^ -o $@  $(LDFLAGS)
-	$(CC) $(CFLAGS)  -shared $^ -o $@
+	$(CC) $(CFLAGS)  -shared $^ -o $@  $(LDFLAGS)
+#	$(CC) $(CFLAGS)  -shared $^ -o $@
 
 $(OBJDIR)%.o: %.c $(DEPS)
 	$(CC) $(COMMON) $(CFLAGS) -c $< -o $@
