@@ -11,7 +11,7 @@
 #define SECRET_NUM -1234
 extern int gpu_index;
 
-#define DEBUG_PRINT (0)
+#define DEBUG_PRINT (1)
 #define HEADER "[OBJ_DECTOR]: "
 
 #if (DEBUG_PRINT)
@@ -417,6 +417,9 @@ struct layer{
     cudnnConvolutionBwdFilterAlgo_t bf_algo;
 #endif
 #endif
+#ifdef DUMP_LAYER
+#endif
+
 };
 
 void free_layer(layer);
@@ -610,6 +613,11 @@ image letterbox_image_thread(image im, int w, int h, pthreadpool_t threadpool);
 #endif
 #ifdef NNPACK
 image load_image_thread(char *filename, int w, int h, int c, pthreadpool_t threadpool);
+#endif
+
+#ifdef DUMP_LAYER
+void write_layer(int number,char *layer_name, int w, int h, int c, int dz, char *exten, void* data);
+void *w2fpgaw(void*src, int w, int h, int in_c, int dz);
 #endif
 
 #ifdef __cplusplus
@@ -820,5 +828,13 @@ void normalize_array(float *a, int n);
 int *read_intlist(char *s, int *n, int d);
 size_t rand_size_t();
 float rand_normal();
+
+#ifdef QUANTIZATION
+typedef short quant_t;
+//typedef float quant_t;
+//typedef int quant_t;
+
+#endif
+
 
 #endif

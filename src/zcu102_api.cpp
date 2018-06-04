@@ -113,6 +113,88 @@ void write_jpeg(Mat &a, const char *filename)
 	imwrite(filename, a, compression_params);
 }
 
+
+void cp_kernel(void *src, void *dst, int ks)
+{
+	int i = 0;
+	
+	quant_t *src_p = (quant_t *)src;
+	quant_t *dst_p = (quant_t *)dst;
+
+	memcpy(dst,src,ks*sizeof(quant_t));
+
+}
+
+
+#ifdef DUMP_LAYER
+void *w2fpgaw(void*src, int w, int h, int in_c, int dz)
+{
+	void *dst = malloc(w*h*dz);
+
+	int ks = w/in_c;
+	int oc = h;
+	int ic = in_c;
+	int i,j;
+	int dst_strip = ks*oc*sizeof(quant_t);
+	printf("oc:%d,ic:%d,ks:%d, strip:%d\n", oc,ic,ks, dst_strip);	
+
+	for(i = 0; i < oc; i++)
+	{
+		for(j = 0; j < ic; j++)
+		{
+			void * dst_p;
+			dst_p = dst + i* ks*sizeof(quant_t) +  j*dst_strip;
+			memcpy(dst_p,src,ks*sizeof(quant_t));
+		}
+	}
+	return dst;	
+}
+
+void write_layer(int number,char *layer_name, int w, int h, int c, int dz, char *exten, void* data)
+{
+	FILE *out_fp;
+	char str[250];
+	char buf[250];
+	char tmp[20];
+	int ret;
+	int size;
+	void *pad;
+	char *dir = "./weights/";	
+	
+	strcpy(str, layer_name);
+	sprintf(tmp, "%d", number);
+	strcat(str,tmp);
+	strcat(str,"_");
+	sprintf(tmp, "%d", h);
+	strcat(str,tmp);
+	strcat(str,"x");
+	sprintf(tmp, "%d", w);
+	strcat(str,tmp);
+
+    strcat(str,"x");
+    sprintf(tmp, "%d", c);
+    strcat(str,tmp);
+
+    sprintf(tmp, "_%d", dz);
+    strcat(str,tmp);
+    strcat(str,exten);
+	sprintf(buf,"%s%s",dir,str);
+    out_fp = fopen(buf, "wb");
+    ret = fwrite(data, sizeof(char), w*h*c*dz,out_fp);
+	size = w*h*c*dz;
+	size = size % 8;
+	if (size)
+	{
+		pad =  calloc(size, sizeof(char));
+		size = fwrite(pad, sizeof(char), size, out_fp);
+	}
+
+	dector_printf("Write %dB + %dB to %s\n", ret, size, buf);
+    fclose(out_fp);		
+}
+#endif
+
+
 void write_raw_image(void *raw_image,const char *filename, unsigned int size)
 {
 	FILE *out_fp;
@@ -275,12 +357,12 @@ int yolo_inference_with_ptr(void *__restrict__ ptr, int w, int h, int c, float t
 	dector_printf("get box point %fs.\n", sec(clock()-overall));
 	if (nms) do_nms_sort(boxes, probs, l.side*l.side*l.n, l.classes, nms); /*eliminate the similar box and only left 1 box*/
 	dector_printf("nms point %fs.\n", sec(clock()-overall));
-
+#ifdef DEMO
     printf("\033[2J");
     printf("\033[1;1H");
     printf("\nFPS:%.1f\n", 1/sec(clock()-overall));
     printf("Objects:\n\n");
-	
+#endif
 	draw_detections(original_image, l.side*l.side*l.n, thresh, boxes, probs, 0, voc_names, alphabet, 20);
 
 	dector_printf("draw box point %fs.\n", sec(clock()-overall));
@@ -309,7 +391,7 @@ int yolo_inference_with_ptr(void *__restrict__ ptr, int w, int h, int c, float t
 #endif
 	free_image(original_image);
 	free_image(resized);
-
+	free(cached_ptr);
 	return 0;
 }
 

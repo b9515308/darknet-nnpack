@@ -1,15 +1,15 @@
 GPU=0
 CUDNN=0
 OPENCV=1
-NNPACK=1
-ARM_NEON=1
+NNPACK=0
+ARM_NEON=0
 OPENMP=0
 DEBUG=0
 PROF=0
-ARCH_X86=0
-ARCH_ARM=1
-
-
+ARCH_X86=1
+ARCH_ARM=0
+QUANTIZE=1
+DUMP_LAYER=0
 ARCH= -gencode arch=compute_30,code=sm_30 \
       -gencode arch=compute_35,code=sm_35 \
       -gencode arch=compute_50,code=[sm_50,compute_50] \
@@ -71,10 +71,6 @@ endif
 
 ifeq ($(ARCH_ARM),1)
 LDFLAGS += -lopencv_core -lopencv_imgcodecs -lopencv_highgui -lopencv_videoio -lopencv_imgproc
-#LDFLAGS += -Wl,-rpath-link='/home/lucas/Project/Software/SDSoc_2017-4/SDK/2017.4/data/embeddedsw/ThirdParty/opencv/aarch64/lib'
-#LDFLAGS += -Wl,-rpath='/usr/lib'
-#LBFLAGS = -Wl,-rpath-link='/home/lucas/Project/Software/SDSoc_2017-4/SDK/2017.4/data/embeddedsw/ThirdParty/opencv/aarch64/lib'
-#LBFALGS +=-Wl,-rpath='/usr/lib'
 
 endif
 endif
@@ -121,6 +117,15 @@ LDFLAGS+= -lstdc++
 OBJ+=convolutional_kernels.o deconvolutional_kernels.o activation_kernels.o im2col_kernels.o col2im_kernels.o blas_kernels.o crop_layer_kernels.o dropout_layer_kernels.o maxpool_layer_kernels.o avgpool_layer_kernels.o
 endif
 
+ifeq ($(QUANTIZE),1) 
+CFLAGS+= -DQUANTIZATION
+endif
+
+ifeq ($(DUMP_LAYER),1)
+CFLAGS+= -DDUMP_LAYER
+COMMON+= -DDUMP_LAYER
+endif
+
 ifeq ($(OPENCV), 1)
 OBJ += zcu102_api.o
 LDFLAGS+= -lstdc++
@@ -141,8 +146,8 @@ $(ALIB): $(OBJS)
 	$(AR) $(ARFLAGS) $@ $^
 
 $(SLIB): $(OBJS)
-	$(CC) $(CFLAGS)  -shared $^ -o $@  $(LDFLAGS)
-#	$(CC) $(CFLAGS)  -shared $^ -o $@
+#	$(CC) $(CFLAGS)  -shared $^ -o $@  $(LDFLAGS)
+	$(CC) $(CFLAGS)  -shared $^ -o $@
 
 $(OBJDIR)%.o: %.c $(DEPS)
 	$(CC) $(COMMON) $(CFLAGS) -c $< -o $@

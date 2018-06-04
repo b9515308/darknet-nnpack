@@ -218,6 +218,8 @@ convolutional_layer make_convolutional_layer(int batch, int h, int w, int c, int
     l.delta  = calloc(l.batch*l.outputs, sizeof(float));
 #ifdef NNPACK
 	l.forward = forward_convolutional_layer_nnpack;
+#elif QUANTIZATION
+	l.forward = forward_convolutional_layer_quan;
 #else
 	l.forward = forward_convolutional_layer;
 #endif
@@ -525,6 +527,105 @@ void forward_convolutional_layer(convolutional_layer l, network net)
     activate_array(l.output, l.outputs*l.batch, l.activation);
     if(l.binary || l.xnor) swap_binary(&l);
 }
+#ifdef QUANTIZATION
+
+quant_t* covert_float2quan(float *weights, unsigned int size)
+{
+    unsigned int i;
+
+    quant_t *p = calloc(size,sizeof(quant_t));
+    for(i = 0 ; i < size; i++)
+	    p[i] = (quant_t) (weights[i]);
+    return p;
+}
+
+float* covert_quan2float(quant_t *weights, unsigned int size)
+{
+    unsigned int i;
+    float *p = calloc(size,sizeof(float));
+
+    for(i = 0 ; i < size; i++)
+        p[i] = (weights[i]);
+    return p;
+}
+
+
+void forward_convolutional_layer_quan(convolutional_layer l, network net)
+{
+    int i, j;
+
+    fill_cpu(l.outputs*l.batch, 0, l.output, 1);
+
+    if(l.xnor){
+        binarize_weights(l.weights, l.n, l.c/l.groups*l.size*l.size, l.binary_weights);
+        swap_binary(&l);
+        binarize_cpu(net.input, l.c*l.h*l.w*l.batch, l.binary_input);
+        net.input = l.binary_input;
+    }
+
+
+
+    int m = l.n/l.groups;
+    int k = l.size*l.size*l.c/l.groups;
+    int n = l.out_w*l.out_h;
+
+#ifdef DUMP_LAYER
+	write_layer(net.index, "conv_weight", k, m, 1, 4,".weight", l.weights);
+    write_layer(net.index, "conv_input", l.w, l.h, l.c, 4,".input", net.input);
+#endif
+
+
+    quant_t *q_weights = covert_float2quan(l.weights, m * k);    
+    quant_t *q_output = calloc(m*n*l.batch,sizeof(quant_t));
+	quant_t *q_input = covert_float2quan(net.input, l.h*l.w*l.c);
+#ifdef DUMP_LAYER
+	quant_t *q_fpga_weights = w2fpgaw(q_weights,k,m,l.c,sizeof(quant_t));
+#endif
+    for(i = 0; i < l.batch; ++i){
+        for(j = 0; j < l.groups; ++j){
+            quant_t *a = q_weights + j*l.nweights/l.groups;
+            quant_t *b = net.workspace;
+            quant_t *c = q_output + (i*l.groups + j)*n*m;
+
+
+            im2col_cpu_quant(net.input + (i*l.groups + j)*l.c/l.groups*l.h*l.w,
+                l.c/l.groups, l.h, l.w, l.size, l.stride, l.pad, b); 
+
+			gemm_quantize(0,0,m,n,k,1,a,k,b,n,1,c,n);
+        }
+    }
+
+#ifdef DUMP_LAYER
+    write_layer(net.index, "conv_qweight", k, m, 1, sizeof(quant_t),".weight", q_weights);
+    write_layer(net.index, "conv_qinput", l.w, l.h, l.c, sizeof(quant_t),".input", q_input);
+	write_layer(net.index, "conv_qout", n, m, 1, sizeof(quant_t),".out", q_output);
+	write_layer(net.index, "quan_fpga_weight", l.size*l.size*l.n, l.c, 1,  sizeof(quant_t),".weight", q_fpga_weights);
+#endif
+#if 1
+    float *t = covert_quan2float(q_output,m*n*l.batch); 
+    memcpy(l.output, t, m*n*l.batch*sizeof(float));
+    free(t);
+    t = covert_quan2float(q_weights,m*k);
+    memcpy(l.weights, t, m*k*sizeof(float));
+    free(t);
+#endif
+    if(l.batch_normalize){
+        forward_batchnorm_layer(l, net);
+    } else {
+        add_bias(l.output, l.biases, l.batch, l.n, l.out_h*l.out_w);
+    }
+
+    activate_array(l.output, l.outputs*l.batch, l.activation);
+    if(l.binary || l.xnor) swap_binary(&l);
+	
+	free(q_weights);
+	free(q_input);
+	free(q_output);
+#ifdef DUMP_LAYER
+	free(q_fpga_weights);
+#endif
+}
+#endif
 
 void backward_convolutional_layer(convolutional_layer l, network net)
 {

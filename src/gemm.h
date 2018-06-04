@@ -1,5 +1,8 @@
 #ifndef GEMM_H
 #define GEMM_H
+#ifdef QUANTIZATION
+#include "darknet.h"
+#endif
 
 void gemm_bin(int M, int N, int K, float ALPHA, 
         char  *A, int lda, 
@@ -17,6 +20,14 @@ void gemm_cpu(int TA, int TB, int M, int N, int K, float ALPHA,
         float *B, int ldb,
         float BETA,
         float *C, int ldc);
+
+#ifdef QUANTIZATION
+void gemm_quantize(int TA, int TB, int M, int N, int K, quant_t ALPHA,
+        quant_t *A, int lda,
+        quant_t *B, int ldb,
+        quant_t BETA,
+        quant_t *C, int ldc);
+#endif
 
 #ifdef GPU
 void gemm_gpu(int TA, int TB, int M, int N, int K, float ALPHA, 
