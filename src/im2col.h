@@ -11,7 +11,7 @@ void im2col_cpu(float* data_im,
 #ifdef QUANTIZATION
 void im2col_cpu_quant(float* data_im,
      int channels,  int height,  int width,
-     int ksize,  int stride, int pad, quant_t* data_col);
+     int ksize,  int stride, int pad, input_quant_t* data_col);
 #endif
 
 #ifdef GPU

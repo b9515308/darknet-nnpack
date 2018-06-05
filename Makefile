@@ -1,14 +1,14 @@
 GPU=0
 CUDNN=0
 OPENCV=1
-NNPACK=0
-ARM_NEON=0
+NNPACK=1
+ARM_NEON=1
 OPENMP=0
 DEBUG=0
-PROF=0
-ARCH_X86=1
-ARCH_ARM=0
-QUANTIZE=1
+PROF=1
+ARCH_X86=0
+ARCH_ARM=1
+QUANTIZE=0
 DUMP_LAYER=0
 ARCH= -gencode arch=compute_30,code=sm_30 \
       -gencode arch=compute_35,code=sm_35 \
@@ -145,9 +145,17 @@ $(EXEC): $(EXECOBJ) $(ALIB)
 $(ALIB): $(OBJS)
 	$(AR) $(ARFLAGS) $@ $^
 
+ifeq ($(ARCH_X86),1)
 $(SLIB): $(OBJS)
-#	$(CC) $(CFLAGS)  -shared $^ -o $@  $(LDFLAGS)
 	$(CC) $(CFLAGS)  -shared $^ -o $@
+endif
+
+ifeq ($(ARCH_ARM),1)
+$(SLIB): $(OBJS)
+	$(CC) $(CFLAGS)  -shared $^ -o $@  $(LDFLAGS)
+endif
+
+
 
 $(OBJDIR)%.o: %.c $(DEPS)
 	$(CC) $(COMMON) $(CFLAGS) -c $< -o $@

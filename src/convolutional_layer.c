@@ -12,6 +12,10 @@
 #include "xnor_layer.h"
 #endif
 
+//#define Q_SCALE (1024*1024)
+//#define Q_SCALE (1000000000)
+#define Q_SCALE 1
+
 void swap_binary(convolutional_layer *l)
 {
     float *swap = l->weights;
@@ -535,7 +539,9 @@ quant_t* covert_float2quan(float *weights, unsigned int size)
 
     quant_t *p = calloc(size,sizeof(quant_t));
     for(i = 0 ; i < size; i++)
-	    p[i] = (quant_t) (weights[i]);
+	    p[i] = (quant_t) (weights[i] * Q_SCALE);
+
+
     return p;
 }
 
@@ -545,7 +551,7 @@ float* covert_quan2float(quant_t *weights, unsigned int size)
     float *p = calloc(size,sizeof(float));
 
     for(i = 0 ; i < size; i++)
-        p[i] = (weights[i]);
+        p[i] = (float)(weights[i])/(float)(Q_SCALE);
     return p;
 }
 
@@ -577,16 +583,16 @@ void forward_convolutional_layer_quan(convolutional_layer l, network net)
 
     quant_t *q_weights = covert_float2quan(l.weights, m * k);    
     quant_t *q_output = calloc(m*n*l.batch,sizeof(quant_t));
-	quant_t *q_input = covert_float2quan(net.input, l.h*l.w*l.c);
 #ifdef DUMP_LAYER
+	quant_t *q_input = covert_float2quan(net.input, l.h*l.w*l.c);
 	quant_t *q_fpga_weights = w2fpgaw(q_weights,k,m,l.c,sizeof(quant_t));
 #endif
+
     for(i = 0; i < l.batch; ++i){
         for(j = 0; j < l.groups; ++j){
             quant_t *a = q_weights + j*l.nweights/l.groups;
-            quant_t *b = net.workspace;
+            input_quant_t *b = net.workspace;
             quant_t *c = q_output + (i*l.groups + j)*n*m;
-
 
             im2col_cpu_quant(net.input + (i*l.groups + j)*l.c/l.groups*l.h*l.w,
                 l.c/l.groups, l.h, l.w, l.size, l.stride, l.pad, b); 
@@ -619,9 +625,9 @@ void forward_convolutional_layer_quan(convolutional_layer l, network net)
     if(l.binary || l.xnor) swap_binary(&l);
 	
 	free(q_weights);
-	free(q_input);
 	free(q_output);
 #ifdef DUMP_LAYER
+	free(q_input);
 	free(q_fpga_weights);
 #endif
 }

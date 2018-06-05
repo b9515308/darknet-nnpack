@@ -114,6 +114,8 @@ void write_jpeg(Mat &a, const char *filename)
 }
 
 
+
+#ifdef DUMP_LAYER
 void cp_kernel(void *src, void *dst, int ks)
 {
 	int i = 0;
@@ -126,7 +128,6 @@ void cp_kernel(void *src, void *dst, int ks)
 }
 
 
-#ifdef DUMP_LAYER
 void *w2fpgaw(void*src, int w, int h, int in_c, int dz)
 {
 	void *dst = malloc(w*h*dz);
@@ -183,6 +184,7 @@ void write_layer(int number,char *layer_name, int w, int h, int c, int dz, char 
     ret = fwrite(data, sizeof(char), w*h*c*dz,out_fp);
 	size = w*h*c*dz;
 	size = size % 8;
+
 	if (size)
 	{
 		pad =  calloc(size, sizeof(char));
@@ -191,6 +193,9 @@ void write_layer(int number,char *layer_name, int w, int h, int c, int dz, char 
 
 	dector_printf("Write %dB + %dB to %s\n", ret, size, buf);
     fclose(out_fp);		
+
+    out_fp = fopen(buf, "rb");
+	fread(data, 4, 1, out_fp);
 }
 #endif
 
@@ -254,6 +259,7 @@ void validate_zcu102(int argc, char **argv)
     nnp_deinitialize();
 #endif
 
+	free(yuv422_data);
 }
 
 
@@ -280,7 +286,6 @@ int yolo_inference_with_ptr(void *__restrict__ ptr, int w, int h, int c, float t
 	clock_t time;
 	clock_t overall;
 	void *__restrict__ cached_ptr;
-//#define workaround
 #ifdef workaround
 	if(skip_count % 7 < 5)
 	{
@@ -370,7 +375,9 @@ int yolo_inference_with_ptr(void *__restrict__ ptr, int w, int h, int c, float t
 	image_denormalize(&original_image);
 	rgb2yuv422(&original_image, fb);
 	
+
 	printf("elapse %f seconds.\n", sec(clock()-overall));
+
 
 #ifdef DEBUG
 #if defined(__ARM_ARCH)
@@ -392,6 +399,7 @@ int yolo_inference_with_ptr(void *__restrict__ ptr, int w, int h, int c, float t
 	free_image(original_image);
 	free_image(resized);
 	free(cached_ptr);
+	free(rgb24_data);
 	return 0;
 }
 

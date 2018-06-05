@@ -24,7 +24,7 @@ void gemm_cpu(int TA, int TB, int M, int N, int K, float ALPHA,
 #ifdef QUANTIZATION
 void gemm_quantize(int TA, int TB, int M, int N, int K, quant_t ALPHA,
         quant_t *A, int lda,
-        quant_t *B, int ldb,
+        input_quant_t *B, int ldb,
         quant_t BETA,
         quant_t *C, int ldc);
 #endif

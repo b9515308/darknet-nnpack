@@ -833,6 +833,7 @@ float rand_normal();
 typedef short quant_t;
 //typedef float quant_t;
 //typedef int quant_t;
+typedef float input_quant_t;
 
 #endif
 
