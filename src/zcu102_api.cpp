@@ -362,6 +362,7 @@ int yolo_inference_with_ptr(void *__restrict__ ptr, int w, int h, int c, float t
 	dector_printf("get box point %fs.\n", sec(clock()-overall));
 	if (nms) do_nms_sort(boxes, probs, l.side*l.side*l.n, l.classes, nms); /*eliminate the similar box and only left 1 box*/
 	dector_printf("nms point %fs.\n", sec(clock()-overall));
+#define DEMO
 #ifdef DEMO
     printf("\033[2J");
     printf("\033[1;1H");

@@ -11,7 +11,7 @@
 #define SECRET_NUM -1234
 extern int gpu_index;
 
-#define DEBUG_PRINT (1)
+#define DEBUG_PRINT (0)
 #define HEADER "[OBJ_DECTOR]: "
 
 #if (DEBUG_PRINT)
