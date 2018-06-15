@@ -1,0 +1,16 @@
+samples/weights_quanfloat/weights/conv_weight0_16x27x1_4.weight
+samples/weights_quanfloat/weights/conv_weight2_32x144x1_4.weight
+samples/weights_quanfloat/weights/conv_weight4_64x288x1_4.weight
+samples/weights_quanfloat/weights/conv_weight6_128x576x1_4.weight
+samples/weights_quanfloat/weights/conv_weight8_256x1152x1_4.weight
+samples/weights_quanfloat/weights/conv_weight10_512x2304x1_4.weight
+samples/weights_quanfloat/weights/conv_weight12_1024x4608x1_4.weight
+samples/weights_quanfloat/weights/conv_weight13_256x9216x1_4.weight
+samples/weights_quanfloat/weights/conv_input0_448x448x3_4.input
+samples/weights_quanfloat/weights/conv_input2_224x224x16_4.input
+samples/weights_quanfloat/weights/conv_input4_112x112x32_4.input
+samples/weights_quanfloat/weights/conv_input6_56x56x64_4.input
+samples/weights_quanfloat/weights/conv_input8_28x28x128_4.input
+samples/weights_quanfloat/weights/conv_input10_14x14x256_4.input
+samples/weights_quanfloat/weights/conv_input12_7x7x512_4.input
+samples/weights_quanfloat/weights/conv_input13_7x7x1024_4.input
