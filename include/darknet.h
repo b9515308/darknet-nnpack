@@ -830,10 +830,13 @@ size_t rand_size_t();
 float rand_normal();
 
 #ifdef QUANTIZATION
-typedef short quant_t;
+//typedef short quant_t;
 //typedef float quant_t;
-//typedef int quant_t;
+typedef int quant_t;
 typedef float input_quant_t;
+#define WEIGHT_SCALE (10^6)
+#define INPUT_SCALE (1000)
+
 
 #endif
 

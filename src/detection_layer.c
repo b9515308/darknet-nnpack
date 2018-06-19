@@ -10,7 +10,9 @@
 #include <assert.h>
 #include <string.h>
 #include <stdlib.h>
-
+#ifdef DUMP_LAYER
+#include <fcntl.h>
+#endif
 detection_layer make_detection_layer(int batch, int inputs, int n, int side, int classes, int coords, int rescore)
 {
     detection_layer l = {0};
@@ -216,6 +218,31 @@ void forward_detection_layer(const detection_layer l, network net)
         //if(l.reorg) reorg(l.delta, l.w*l.h, size*l.n, l.batch, 0);
     }
 }
+#ifdef DUMP_LAYER 
+void save_prediction_files(float *data)
+{
+    int fd;
+    int nr; 
+    unsigned int* dump;
+        
+    fd = open("prediction_cube.bin", O_CREAT | O_SYNC | O_RDWR | O_TRUNC, S_IRUSR | S_IWUSR);
+    if (fd == -1)
+           printf("[OBJ DECTOR] save data failed\n");
+
+    printf("[OBJ DECTOR] float = %d bytes\n",sizeof(float));
+    printf("[OBJ DECTOR] prediction size = %d bytes\n", 7*7*30*sizeof(float));
+    nr = write(fd, data,7*7*30*sizeof(float));
+    if (nr == -1)
+           printf("[OBJ DECTOR] copy error\n");
+
+    dump = data;
+    printf("[OBJ DECTOR] save %d bytes to ./prediction_cube.bin\n", nr);
+    printf("[OBJ DECTOR] dump data for check\n");
+    printf("000000000: %x %x %x %x\n", *dump, *(dump+1), *(dump+2),*(dump+3));
+    printf("000016f0: %x %x\n", *(dump + 1468), *(dump + 1469));
+    return ;
+}
+#endif
 
 void backward_detection_layer(const detection_layer l, network net)
 {
@@ -226,6 +253,9 @@ void get_detection_boxes(layer l, int w, int h, float thresh, float **probs, box
 {
     int i,j,n;
     float *predictions = l.output;
+    #ifdef DUMP_LAYER
+    save_prediction_files(predictions);
+    #endif
     //int per_cell = 5*num+classes;
     for (i = 0; i < l.side*l.side; ++i){
         int row = i / l.side;

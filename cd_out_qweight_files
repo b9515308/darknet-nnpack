@@ -1,0 +1,8 @@
+weights/conv_qweight0_16x27x1_4.weight
+weights/conv_qweight2_32x144x1_4.weight
+weights/conv_qweight4_64x288x1_4.weight
+weights/conv_qweight6_128x576x1_4.weight
+weights/conv_qweight8_256x1152x1_4.weight
+weights/conv_qweight10_512x2304x1_4.weight
+weights/conv_qweight12_1024x4608x1_4.weight
+weights/conv_qweight13_256x9216x1_4.weight

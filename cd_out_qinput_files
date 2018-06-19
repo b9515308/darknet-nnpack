@@ -1,0 +1,8 @@
+weights/conv_qinput0_448x448x3_4.input
+#weights/conv_qinput2_224x224x16_4.input
+#weights/conv_qinput4_112x112x32_4.input
+#weights/conv_qinput6_56x56x64_4.input
+#weights/conv_qinput8_28x28x128_4.input
+#weights/conv_qinput10_14x14x256_4.input
+#weights/conv_qinput12_7x7x512_4.input
+#weights/conv_qinput13_7x7x1024_4.input

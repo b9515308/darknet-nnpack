@@ -12,10 +12,6 @@
 #include "xnor_layer.h"
 #endif
 
-//#define Q_SCALE (1024*1024)
-//#define Q_SCALE (1000000000)
-#define Q_SCALE 1
-
 void swap_binary(convolutional_layer *l)
 {
     float *swap = l->weights;
@@ -532,26 +528,25 @@ void forward_convolutional_layer(convolutional_layer l, network net)
     if(l.binary || l.xnor) swap_binary(&l);
 }
 #ifdef QUANTIZATION
-
-quant_t* covert_float2quan(float *weights, unsigned int size)
+quant_t* covert_float2quan(float *weights, unsigned int size, unsigned int scale)
 {
     unsigned int i;
 
     quant_t *p = calloc(size,sizeof(quant_t));
     for(i = 0 ; i < size; i++)
-	    p[i] = (quant_t) (weights[i] * Q_SCALE);
+	    p[i] = (quant_t) (weights[i] * scale);
 
 
     return p;
 }
 
-float* covert_quan2float(quant_t *weights, unsigned int size)
+float* covert_quan2float(quant_t *weights, unsigned int size, unsigned int scale)
 {
     unsigned int i;
     float *p = calloc(size,sizeof(float));
 
     for(i = 0 ; i < size; i++)
-        p[i] = (float)(weights[i])/(float)(Q_SCALE);
+        p[i] = (float)(weights[i])/(float)(scale);
     return p;
 }
 
@@ -581,10 +576,10 @@ void forward_convolutional_layer_quan(convolutional_layer l, network net)
 #endif
 
 
-    quant_t *q_weights = covert_float2quan(l.weights, m * k);    
+    quant_t *q_weights = covert_float2quan(l.weights, m * k, WEIGHT_SCALE);    
     quant_t *q_output = calloc(m*n*l.batch,sizeof(quant_t));
 #ifdef DUMP_LAYER
-	quant_t *q_input = covert_float2quan(net.input, l.h*l.w*l.c);
+	quant_t *q_input = covert_float2quan(net.input, l.h*l.w*l.c, INPUT_SCALE);
 	quant_t *q_fpga_weights = w2fpgaw(q_weights,k,m,l.c,sizeof(quant_t));
 #endif
 
@@ -608,10 +603,10 @@ void forward_convolutional_layer_quan(convolutional_layer l, network net)
 	write_layer(net.index, "quan_fpga_weight", l.size*l.size*l.n, l.c, 1,  sizeof(quant_t),".weight", q_fpga_weights);
 #endif
 #if 1
-    float *t = covert_quan2float(q_output,m*n*l.batch); 
+    float *t = covert_quan2float(q_output,m*n*l.batch, WEIGHT_SCALE*INPUT_SCALE); 
     memcpy(l.output, t, m*n*l.batch*sizeof(float));
     free(t);
-    t = covert_quan2float(q_weights,m*k);
+    t = covert_quan2float(q_weights,m*k, WEIGHT_SCALE);
     memcpy(l.weights, t, m*k*sizeof(float));
     free(t);
 #endif

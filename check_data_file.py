@@ -4,6 +4,9 @@ import matplotlib.pyplot as plt
 import sys
 import pandas as pd
 import seaborn as sns
+f = []
+
+print ("python check_data_file.py cd_out_weight_files cd_out_qweight_files cd_out_input_files cd_out_qinput_files prediction_cube.bin golden_prediction_cube.bin")
 
 def get_order_array(data):
     s = np.abs(data)
@@ -12,10 +15,22 @@ def get_order_array(data):
     s = np.floor(s)
     return s
 
-file = open(sys.argv[1], "r")
-
-for line in file:
+weight_files = open(sys.argv[1], "r")
+qweight_files = open(sys.argv[2], "r")
+input_files = open(sys.argv[3], "r")
+qinput_files = open(sys.argv[4], "r")
+prd_bin = str.strip(sys.argv[5])
+gd_prd_bin = str.strip(sys.argv[6])
+w_df = pd.DataFrame(columns = ["order"])
+qw_df = pd.DataFrame(columns = ["order"])
+in_df = pd.DataFrame(columns = ["order"])
+qin_df = pd.DataFrame(columns = ["order"])
+prd_df = pd.DataFrame(columns = ["order"])
+gd_prd_df = pd.DataFrame(columns = ["order"])
+for index, line in enumerate (weight_files):
     print line
+    if line.find("#") >= 0:
+        continue
     data = np.fromfile(str.strip(line), dtype = np.float32)
     print "Max = ", data.max()
     print "Mim = ", data.min()
@@ -23,27 +38,112 @@ for line in file:
     ten_dis = get_order_array(data)
     sns.set(style="darkgrid")
     df = pd.DataFrame(ten_dis, columns = ["order"])
-    ax = sns.countplot(x = "order", data=df)
-    plt.show()
-
-#print sys.argv[1]
-#weight = np.fromfile(sys.argv[1], dtype = sys.argv[2])
-#weight = np.fromfile(sys.argv[1], dtype = np.int16)	
-
-#weight = np.fromfile("conv_weight0_16x27x1_4.weight")
-#print "conv_weight0_16x27x1_4.weight"
-#print "Miminum = ", weight.min()
-#print "Maximum = ", weight.max()
-#print "Near 0 = ", weight[(np.abs(weight - 0)).argmin()]
-
-#sns.set(color_codes=True)
-#sns.distplot(weight)
-#plt.show()
-#print weight[0]
+    w_df = w_df.append(df)    
 
 
+for index, line in enumerate (qweight_files):
+    print line
+    if line.find("#") >= 0:
+        continue
+    data = np.fromfile(str.strip(line), dtype = np.int32)
+    print "Max = ", data.max()
+    print "Mim = ", data.min()
+    print "Near 0 = ", data[np.abs(data - 0).argmin()]
+    data = data + 1
+    ten_dis = get_order_array(data)
+    sns.set(style="darkgrid")
+    df = pd.DataFrame(ten_dis, columns = ["order"])
+    qw_df = qw_df.append(df)    
+    
+for index, line in enumerate (input_files):
+    print line
+    if line.find("#") >= 0:
+        continue
+    data = np.fromfile(str.strip(line), dtype = np.float32)
+    print "Max = ", data.max()
+    print "Mim = ", data.min()
+    print "Near 0 = ", data[np.abs(data - 0).argmin()]
+    ten_dis = get_order_array(data)
+    sns.set(style="darkgrid")
+    df = pd.DataFrame(ten_dis, columns = ["order"])
+    in_df = in_df.append(df)
 
 
-#plt.show()
-#sns.distplot(weight, kde=False, rug=True)
-#plt.show()
+
+for index, line in enumerate (qinput_files):
+    print line
+    if line.find("#") >= 0:
+        continue
+    data = np.fromfile(str.strip(line), dtype = np.int32)
+    print "Max = ", data.max()
+    print "Mim = ", data.min()
+    print "Near 0 = ", data[np.abs(data - 0).argmin()]
+    ten_dis = get_order_array(data)
+    sns.set(style="darkgrid")
+    df = pd.DataFrame(ten_dis, columns = ["order"])
+    qin_df = qin_df.append(df)
+
+
+
+print prd_bin
+data = np.fromfile(prd_bin, dtype = np.float32)
+print "Max = ", data.max()
+print "Mim = ", data.min()
+print "Near 0 = ", data[np.abs(data - 0).argmin()]
+ten_dis = get_order_array(data)
+sns.set(style="darkgrid")
+df = pd.DataFrame(ten_dis, columns = ["order"])
+prd_df = prd_df.append(df)
+
+print gd_prd_bin
+data = np.fromfile(gd_prd_bin, dtype = np.float32)
+print "Max = ", data.max()
+print "Mim = ", data.min()
+print "Near 0 = ", data[np.abs(data - 0).argmin()]
+ten_dis = get_order_array(data)
+sns.set(style="darkgrid")
+df = pd.DataFrame(ten_dis, columns = ["order"])
+gd_prd_df = gd_prd_df.append(df)
+
+
+
+
+w_figure = plt.figure()
+ax = sns.countplot(x = "order", data=w_df)
+w_figure.canvas.set_window_title("Weights")
+
+
+qw_figure = plt.figure()
+ax = sns.countplot(x = "order", data=qw_df)
+qw_figure.canvas.set_window_title("quan_Weights")
+
+
+in_figure = plt.figure()
+ax = sns.countplot(x = "order", data=in_df)
+in_figure.canvas.set_window_title("inputs")
+
+
+qin_figure = plt.figure()
+ax = sns.countplot(x = "order", data=qin_df)
+qin_figure.canvas.set_window_title("quan_inputs")
+
+
+prd_figure = plt.figure()
+ax = sns.countplot(x = "order", data=prd_df)
+prd_figure.canvas.set_window_title("final_predict_cube")
+
+
+gd_prd_figure = plt.figure()
+ax = sns.countplot(x = "order", data=gd_prd_df)
+gd_prd_figure.canvas.set_window_title("gorden_predict_cube")
+
+#show all
+
+#in_df = in_df.append(w_df)
+#in_figure = plt.figure()
+#ax = sns.countplot(x = "order", data=in_df)
+#in_figure.canvas.set_window_title("all")
+
+plt.show()
+    
+raw_input()
