@@ -1,0 +1,8 @@
+weights/conv_qout0_16x200704x1_2.out
+weights/conv_qout2_32x50176x1_2.out
+weights/conv_qout4_64x12544x1_2.out
+weights/conv_qout6_128x3136x1_2.out
+weights/conv_qout8_256x784x1_2.out
+weights/conv_qout10_512x196x1_2.out
+weights/conv_qout12_1024x49x1_2.out
+weights/conv_qout13_256x49x1_2.out

@@ -1,7 +1,5 @@
 #include "im2col.h"
 #include <stdio.h>
-//#define Q_SCALE 1024*1024
-#define Q_SCALE 1
 
 float im2col_get_pixel(float *im, int height, int width, int channels,
                         int row, int col, int channel, int pad)
@@ -34,7 +32,7 @@ void im2col_cpu_quant(float* data_im,
                 int im_col = w_offset + w * stride;
                 int col_index = (c * height_col + h) * width_col + w;
                 data_col[col_index] = (input_quant_t) (im2col_get_pixel(data_im, height, width, channels,
-                        im_row, im_col, c_im, pad)* Q_SCALE);
+                        im_row, im_col, c_im, pad)* INPUT_SCALE);
 
             }
         }

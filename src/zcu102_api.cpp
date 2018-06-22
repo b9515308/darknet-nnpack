@@ -194,8 +194,16 @@ void write_layer(int number,char *layer_name, int w, int h, int c, int dz, char 
 	dector_printf("Write %dB + %dB to %s\n", ret, size, buf);
     fclose(out_fp);		
 
+#if 0
+    int data_a[16];
+    int i ;
     out_fp = fopen(buf, "rb");
-	fread(data, 4, 1, out_fp);
+	fread(&data_a, 4, 4, out_fp);
+    printf("[quan] read back %s\n", buf);
+    for (i = 0; i < 4; ++i)
+        printf("%d ", data_a[i]);
+    printf("\n");
+#endif
 }
 #endif
 
@@ -362,7 +370,6 @@ int yolo_inference_with_ptr(void *__restrict__ ptr, int w, int h, int c, float t
 	dector_printf("get box point %fs.\n", sec(clock()-overall));
 	if (nms) do_nms_sort(boxes, probs, l.side*l.side*l.n, l.classes, nms); /*eliminate the similar box and only left 1 box*/
 	dector_printf("nms point %fs.\n", sec(clock()-overall));
-#define DEMO
 #ifdef DEMO
     printf("\033[2J");
     printf("\033[1;1H");

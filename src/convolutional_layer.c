@@ -533,9 +533,9 @@ quant_t* covert_float2quan(float *weights, unsigned int size, unsigned int scale
     unsigned int i;
 
     quant_t *p = calloc(size,sizeof(quant_t));
-    for(i = 0 ; i < size; i++)
+    for(i = 0 ; i < size; i++){
 	    p[i] = (quant_t) (weights[i] * scale);
-
+    }
 
     return p;
 }
@@ -582,6 +582,12 @@ void forward_convolutional_layer_quan(convolutional_layer l, network net)
 	quant_t *q_input = covert_float2quan(net.input, l.h*l.w*l.c, INPUT_SCALE);
 	quant_t *q_fpga_weights = w2fpgaw(q_weights,k,m,l.c,sizeof(quant_t));
 #endif
+#if 0
+    printf("[quan] quant weight\n");
+    for (i = 0; i < 4; ++i)
+        printf("%d ", q_weights[i]);
+    printf("\n");
+#endif
 
     for(i = 0; i < l.batch; ++i){
         for(j = 0; j < l.groups; ++j){
@@ -595,6 +601,7 @@ void forward_convolutional_layer_quan(convolutional_layer l, network net)
 			gemm_quantize(0,0,m,n,k,1,a,k,b,n,1,c,n);
         }
     }
+
 
 #ifdef DUMP_LAYER
     write_layer(net.index, "conv_qweight", k, m, 1, sizeof(quant_t),".weight", q_weights);
