@@ -7,6 +7,8 @@
 #include <yolo_lib.h>
 #include <sys/time.h>
 
+#define DEMO
+#define FPGA_ALIGNMENT  (16)
 using namespace cv;
 
 static image **alphabet;
@@ -183,7 +185,7 @@ void write_layer(int number,char *layer_name, int w, int h, int c, int dz, char 
     out_fp = fopen(buf, "wb");
     ret = fwrite(data, sizeof(char), w*h*c*dz,out_fp);
 	size = w*h*c*dz;
-	size = size % 8;
+	size = size % FPGA_ALIGNMENT;
 
 	if (size)
 	{
